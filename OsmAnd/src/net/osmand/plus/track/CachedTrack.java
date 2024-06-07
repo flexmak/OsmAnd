@@ -1,7 +1,7 @@
 package net.osmand.plus.track;
 
-import static net.osmand.plus.routing.ColoringStyleAlgorithms.isAvailableForDrawingTrack;
 import static net.osmand.ColorPalette.LIGHT_GREY;
+import static net.osmand.plus.routing.ColoringStyleAlgorithms.isAvailableForDrawingTrack;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,7 +18,6 @@ import net.osmand.plus.card.color.ColoringPurpose;
 import net.osmand.plus.card.color.ColoringStyle;
 import net.osmand.plus.routing.ColoringType;
 import net.osmand.plus.track.helpers.SelectedGpxFile;
-import net.osmand.plus.views.layers.geometry.MultiColoringGeometryWay;
 import net.osmand.render.RenderingRulesStorage;
 import net.osmand.router.RouteColorize;
 import net.osmand.router.RouteColorize.ColorizationType;
@@ -184,7 +183,7 @@ public class CachedTrack {
 				RouteColorizationPoint colorPoint = colorizationPoints.get(colorPointIdx);
 				if (colorPoint.id == id) {
 					simplifiedSegment.points.add(pt);
-					pt.setColor(colorizationType, colorPoint.color);
+					pt.setColor(colorizationType, colorPoint.mainColor);
 					colorPointIdx++;
 				}
 				id++;

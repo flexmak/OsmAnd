@@ -1185,8 +1185,11 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 		Gpx3DWallColorType wallColorType = getTrackWallColorType(gpxFile);
 		Gpx3DVisualizationType visualizationType = getTrackVisualizationType(gpxFile);
 
+		ColoringType type = ColoringType.valueOf(wallColorType);
+		boolean gradient = coloringType.isGradient() || (type != null && type.isGradient());
+
 		boolean visible = isGpxFileVisible(selectedGpxFile, tileBox);
-		if (!gpxFile.hasTrkPt() && coloringType.isGradient() || !visible) {
+		if (!gpxFile.hasTrkPt() && gradient || !visible) {
 			Set<TrkSegment> renderedSegments = renderedSegmentsCache.get(gpxFilePath);
 			if (renderedSegments != null) {
 				Iterator<TrkSegment> it = renderedSegments.iterator();
@@ -1201,10 +1204,10 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 		}
 
 		List<TrkSegment> segments = new ArrayList<>();
-		if (coloringType.isTrackSolid() || coloringType.isRouteInfoAttribute()) {
-			segments.addAll(selectedGpxFile.getPointsToDisplay());
-		} else {
+		if (gradient) {
 			segments.addAll(getCachedSegments(selectedGpxFile, coloringType.toGradientScaleType(), !hasMapRenderer));
+		} else if (coloringType.isTrackSolid() || coloringType.isRouteInfoAttribute()) {
+			segments.addAll(selectedGpxFile.getPointsToDisplay());
 		}
 
 		Set<TrkSegment> renderedSegments = renderedSegmentsCache.get(gpxFilePath);

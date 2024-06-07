@@ -46,8 +46,8 @@ public class GpxGeometryWay extends MultiColoringGeometryWay<GpxGeometryWayConte
 	                                @NonNull ColoringType coloringType,
 	                                @Nullable String routeInfoAttribute) {
 		boolean coloringTypeChanged = this.coloringType != coloringType
-				|| coloringType == ColoringType.ATTRIBUTE
-				&& !Algorithms.objectEquals(this.routeInfoAttribute, routeInfoAttribute);
+				|| coloringType == ColoringType.ATTRIBUTE && !Algorithms.objectEquals(this.routeInfoAttribute, routeInfoAttribute)
+				|| !Algorithms.objectEquals(getGpx3DWallColorType(), getGpx3DWallColorType(track3DStyle));
 		this.coloringChanged = this.customColor != trackColor || coloringTypeChanged;
 		if (coloringTypeChanged) {
 			resetSymbolProviders();
@@ -82,20 +82,12 @@ public class GpxGeometryWay extends MultiColoringGeometryWay<GpxGeometryWayConte
 			this.points = points;
 			this.routeSegments = routeSegments;
 
-			if (coloringType.isTrackSolid()) {
-				if (points != null) {
-					if (hasMapRenderer()) {
-						Map<Integer, GeometryWayStyle<?>> styleMap = new TreeMap<>();
-						GeometrySolidWayStyle<?> style = getSolidWayStyle(customColor);
-						styleMap.put(0, style);
-						updateWay(new GeometryWayWptPtProvider(points), styleMap, tb);
-					} else {
-						updateWay(new GeometryWayWptPtProvider(points), tb);
-					}
-				} else {
-					clearWay();
-				}
-			} else if (coloringType.isGradient()) {
+			ColoringType type = getOutlineColoringType();
+			boolean solid = coloringType.isTrackSolid() || (type != null && type.isTrackSolid());
+			boolean gradient = coloringType.isGradient() || (type != null && type.isGradient());
+			boolean routeInfoAttribute = coloringType.isRouteInfoAttribute() || (type != null && type.isRouteInfoAttribute());
+
+			if (gradient) {
 				if (points != null) {
 					if (hasMapRenderer()) {
 						updateGpxGradientWay(tb, points);
@@ -105,9 +97,22 @@ public class GpxGeometryWay extends MultiColoringGeometryWay<GpxGeometryWayConte
 				} else {
 					clearWay();
 				}
-			} else if (coloringType.isRouteInfoAttribute()) {
+			} else if (routeInfoAttribute) {
 				if (points != null && routeSegments != null) {
 					updateSolidMultiColorRoute(tb, RouteProvider.locationsFromWpts(points), routeSegments);
+				} else {
+					clearWay();
+				}
+			} else if (solid) {
+				if (points != null) {
+					if (hasMapRenderer()) {
+						Map<Integer, GeometryWayStyle<?>> styleMap = new TreeMap<>();
+						GeometrySolidWayStyle<?> style = getSolidWayStyle(customColor);
+						styleMap.put(0, style);
+						updateWay(new GeometryWayWptPtProvider(points), styleMap, tb);
+					} else {
+						updateWay(new GeometryWayWptPtProvider(points), tb);
+					}
 				} else {
 					clearWay();
 				}
@@ -121,11 +126,15 @@ public class GpxGeometryWay extends MultiColoringGeometryWay<GpxGeometryWayConte
 		for (int i = 0; i < points.size(); i++) {
 			WptPt wptPt = points.get(i);
 			pointHeights.add((float) wptPt.ele);
+
+			ColoringType type = getOutlineColoringType();
 			RouteColorizationPoint point = new RouteColorizationPoint(i, wptPt.lat, wptPt.lon, 0);
-			point.color = getPointColor(coloringType, wptPt);
+			point.mainColor = getPointColor(coloringType, wptPt);
+			point.secondaryColor = type != null ? getPointColor(type, wptPt) : point.mainColor;
+
 			colorizationPoints.add(point);
 		}
-		updateWay(new GradientGeometryWayProvider(null, colorizationPoints, pointHeights), createGradientStyles(colorizationPoints), tb);
+		updateWay(new GradientGeometryWayProvider(null, colorizationPoints, pointHeights), createGradient3DStyles(colorizationPoints), tb);
 	}
 
 	@ColorInt
@@ -144,9 +153,9 @@ public class GpxGeometryWay extends MultiColoringGeometryWay<GpxGeometryWayConte
 
 	@Override
 	protected GeometryWayStyle<?> getStyle(int index, GeometryWayStyle<?> defaultWayStyle) {
-		return coloringType.isGradient() && styleMap.containsKey(index)
-				? styleMap.get(index)
-				: super.getStyle(index, defaultWayStyle);
+		ColoringType type = getOutlineColoringType();
+		boolean gradient = coloringType.isGradient() || (type != null && type.isGradient());
+		return gradient && styleMap.containsKey(index) ? styleMap.get(index) : super.getStyle(index, defaultWayStyle);
 	}
 
 	@NonNull

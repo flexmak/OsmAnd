@@ -155,10 +155,12 @@ public class GeometryWayDrawer<T extends GeometryWayContext> {
 	                               boolean approximationEnabled, boolean showPathBitmaps,
 	                               @Nullable Bitmap pathBitmap, @Nullable Bitmap specialPathBitmap,
 	                               float bitmapStep, float specialBitmapStep, boolean bitmapOnSurface,
-	                               @Nullable QListFColorARGB colorizationMapping, int colorizationScheme,
-	                               @NonNull List<DrawPathData31> pathsData) {
+	                               @Nullable QListFColorARGB colorizationMapping,
+	                               @Nullable QListFColorARGB outlineColorizationMapping,
+	                               int colorizationScheme, @NonNull List<DrawPathData31> pathsData) {
 		long startBuildVectorLineTime = System.currentTimeMillis();
 		boolean hasColorizationMapping = colorizationMapping != null && !colorizationMapping.isEmpty();
+		boolean hasOutlineColorizationMapping = outlineColorizationMapping != null && !outlineColorizationMapping.isEmpty();
 		QVectorPointI points = new QVectorPointI();
 		QListFloat heights = new QListFloat();
 		QListFColorARGB traceColorizationMapping = new QListFColorARGB();
@@ -279,14 +281,17 @@ public class GeometryWayDrawer<T extends GeometryWayContext> {
 				}
 			}
 		}
-		if (hasColorizationMapping) {
-			builder.setColorizationScheme(colorizationScheme)
-					.setColorizationMapping(colorizationMapping)
-					.setOutlineColorizationMapping(colorizationMapping);
+		if (hasColorizationMapping || hasOutlineColorizationMapping) {
+			builder.setColorizationScheme(colorizationScheme);
+			if (hasColorizationMapping) {
+				builder.setColorizationMapping(colorizationMapping);
+			}
+			if (hasOutlineColorizationMapping) {
+				builder.setOutlineColorizationMapping(outlineColorizationMapping);
+			}
 		} else {
 			builder.setFillColor(NativeUtilities.createFColorARGB(color))
 					.setOutlineColor(NativeUtilities.createFColorARGB(outlineColor));
-
 		}
 		if (showRaised) {
 			if (linePositionType != null) {
@@ -374,7 +379,7 @@ public class GeometryWayDrawer<T extends GeometryWayContext> {
 		float pxStep = (float) style.getPointStepPx(1f);
 		buildVectorLine(collection, baseOrder, lineId, color, width, outlineColor, outlineWidth, dashPattern,
 				approximationEnabled, shouldDrawArrows, pointBitmap, null, pxStep,
-				pxStep, true, null, 0,
+				pxStep, true, null, null, 0,
 				pathsData);
 	}
 
